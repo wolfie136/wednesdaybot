@@ -26,7 +26,7 @@ def toot_quote(quote_dict):
     mastodon.status_post(toot_text)
 
 
-def toot_random_quote():
+def toot_random_quote(event=None, context=None):
     if is_it_wednesday():
         random_quote = random.choice(load_quotes())
         toot_quote(random_quote)

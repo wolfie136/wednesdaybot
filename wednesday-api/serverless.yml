@@ -25,10 +25,9 @@ functions:
           path: /{proxy+}
           method: ANY
   toot:
-    handler: toot_random_quote
+    handler: app.toot_random_quote
     events:
-      - schedule: rate(2 hours)
-      - schedule: cron(0 12 * * ? *)
+      - schedule: cron(0 12 ? * WED *)
 
 plugins:
   - serverless-wsgi
