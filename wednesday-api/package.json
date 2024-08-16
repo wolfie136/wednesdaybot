@@ -4,6 +4,7 @@
   "description": "Example of a Python Flask API service with traditional Serverless Framework",
   "author": "",
   "devDependencies": {
+    "serverless-domain-manager": "^7.3.8",
     "serverless-python-requirements": "^6.1.0",
     "serverless-wsgi": "^3.0.4"
   }

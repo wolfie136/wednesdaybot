@@ -8,6 +8,15 @@ service: wednesday-api
 custom:
   wsgi:
     app: app.app
+  customDomain:
+    domainName: wednesday.sandbox.empennage.net
+    basePath: ''
+    #stage: ${self:provider.stage}
+    certificateName: '*.sandbox.empennage.net'
+    createRoute53Record: true
+    #createRoute53IPv6Record: true
+    endpointType: REGIONAL
+    securityPolicy: tls_1_2
 
 provider:
   name: aws
@@ -32,3 +41,4 @@ functions:
 plugins:
   - serverless-wsgi
   - serverless-python-requirements
+  - serverless-domain-manager
