@@ -2,14 +2,16 @@ import csv
 import os
 import random
 from datetime import datetime
+import logging
 
 from flask import Flask, jsonify, make_response, request
 from mastodon import Mastodon
 
 app = Flask(__name__)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 
 
-def toot(quote_dict):
+def toot_quote(quote_dict):
     mastodon = Mastodon(
         access_token=os.environ.get("MASTODON_ACCESS_TOKEN", ""),
         api_base_url=os.environ.get("MASTODON_BASE_URL", ""),
@@ -17,10 +19,19 @@ def toot(quote_dict):
 
     # Toot
     toot_text = quote_dict["quote"]
-    if "attribution" in quote_dict:
-        toot_text = toot_text + " - " + random_quote["attribution"]
+    if "attribution" in quote_dict and quote_dict["attribution"]:
+        toot_text = toot_text + " - " + quote_dict["attribution"]
 
+    logging.info(f"Tooting quote: {toot_text}")
     mastodon.status_post(toot_text)
+
+
+def toot_random_quote():
+    if is_it_wednesday():
+        random_quote = random.choice(load_quotes())
+        toot_quote(random_quote)
+    else:
+        logging.info("Not tooting because it is not Wednesday")
 
 
 def load_quotes():
@@ -36,7 +47,10 @@ def load_quotes():
 
 
 def is_it_wednesday(fake_wednesday=False):
-    if not fake_wednesday:
+    pretend_its_wednesday = fake_wednesday
+    if os.environ.get("FAKE_WEDNESDAY", ""):
+        pretend_its_wednesday = True
+    if not pretend_its_wednesday:
         today = datetime.now()
         if today.weekday() != 2:
             return False
@@ -63,4 +77,4 @@ def resource_not_found(e):
 
 
 if __name__ == "__main__":
-    root()
+    toot_random_quote()
