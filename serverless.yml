@@ -11,10 +11,8 @@ custom:
   customDomain:
     domainName: wednesday.sandbox.empennage.net
     basePath: ''
-    #stage: ${self:provider.stage}
     certificateName: '*.sandbox.empennage.net'
     createRoute53Record: true
-    #createRoute53IPv6Record: true
     endpointType: REGIONAL
     securityPolicy: tls_1_2
 
