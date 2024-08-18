@@ -1,11 +1,12 @@
 import logging
 import random
 
-from flask import Flask, jsonify, make_response, request
+from flask import Blueprint, Flask, jsonify, make_response, request
 
 from utils import utils
 
 app = Flask(__name__)
+api = Blueprint("api_v1", __name__)
 
 if logging.getLogger().hasHandlers():
     # The Lambda environment pre-configures a handler logging to stderr. If a handler is already configured,
@@ -15,8 +16,8 @@ else:
     logging.basicConfig(level=logging.INFO)
 
 
-@app.route("/")
-def root():
+@api.route("/quote")
+def quote():
     # Check if it's Wednesday
     fake_wednesday = request.args.get("it_is_wednesday_in_my_heart")
     if not utils.is_it_wednesday(fake_wednesday=fake_wednesday):
@@ -32,3 +33,6 @@ def root():
 @app.errorhandler(404)
 def resource_not_found(e):
     return make_response(jsonify(error="Not found!"), 404)
+
+
+app.register_blueprint(api, url_prefix="/v1")
