@@ -12,6 +12,7 @@ provider:
   region: eu-west-2
   stage: prod
   memorySize: 128
+  endpointType: REGIONAL
 
 package:
   exclude:
