@@ -4,7 +4,7 @@ service: wednesday-api
 
 custom:
   wsgi:
-    app: app.app
+    app: src/api.app
 
 provider:
   name: aws
@@ -15,11 +15,14 @@ provider:
   endpointType: REGIONAL
 
 package:
+  include:
+    - "!./**"
+    - "./src/**"
+    - "./utils/**"
+    - "./wednesday.csv"
   exclude:
-    - ./node_modules/**
-    - ./.venv/**
-    - ./.serverless/**
-    - package*.json
+    - "**"
+  individually: false
 
 functions:
   api:
@@ -32,7 +35,7 @@ functions:
           path: /{proxy+}
           method: ANY
   toot:
-    handler: app.toot_random_quote
+    handler: src/toot.toot_random_quote
     events:
       - schedule: cron(0 12 ? * WED *)
 
