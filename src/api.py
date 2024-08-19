@@ -1,7 +1,7 @@
 import logging
 import random
 
-from flask import Blueprint, Flask, jsonify, make_response, request
+from flask import Blueprint, Flask, jsonify, make_response
 
 from utils import utils
 
@@ -18,16 +18,20 @@ else:
 
 @api.route("/quote")
 def quote():
-    # Check if it's Wednesday
-    fake_wednesday = request.args.get("it_is_wednesday_in_my_heart")
-    if not utils.is_it_wednesday(fake_wednesday=fake_wednesday):
-        return jsonify(message="It is not Wednesday"), 425
+    quotes = utils.load_quotes()
+    return jsonify(quotes)
 
-    # Select a random quote
+
+@api.route("/quote/random")
+def quote_random():
     random_quote = random.choice(utils.load_quotes())
+    return jsonify(random_quote)
 
-    # Return the random quote
-    return jsonify(quote=random_quote["quote"], attribution=random_quote["attribution"])
+
+@api.route("/quote/<int:index>")
+def quote_index(index):
+    quote = utils.load_quotes()[index]
+    return jsonify(quote)
 
 
 @app.errorhandler(404)

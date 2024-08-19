@@ -11,7 +11,11 @@ def load_quotes():
             csvfile, delimiter=";", fieldnames=["quote", "attribution"]
         )
         for row in reader:
-            wednesday_list.append(dict(row))
+            if not row["attribution"]:
+                row["attribution"] = ""
+            wednesday_list.append(
+                {"quote": row["quote"], "attribution": row["attribution"]}
+            )
     return wednesday_list
 
 

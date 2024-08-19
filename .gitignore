@@ -2,3 +2,4 @@ node_modules/
 .venv/
 .serverless/
 .env
+__pycache__/
