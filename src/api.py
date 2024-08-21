@@ -7,21 +7,15 @@ from flask import Blueprint, Flask, jsonify, make_response
 from utils import utils
 
 app = Flask(__name__)
-app.config["SWAGGER"] = {"title": "Wednesday API", "version": "1.0.0"}
-swagger_config = {
-    "headers": [],
-    "specs": [
-        {
-            "endpoint": "apispec",
-            "route": "/v1/spec.json",
-            "rule_filter": lambda rule: True,  # all in
-            "model_filter": lambda tag: True,  # all in
-        }
-    ],
-    "static_url_path": "/flasgger_static",
-    "swagger_ui": True,
-    "specs_route": "/",
+app.config["SWAGGER"] = {
+    "title": "Wednesday API",
+    "version": "1.0.0",
+    "description": "An API for Wednesdays",
+    "termsOfService": "Please be nice!",
 }
+swagger_config = Swagger.DEFAULT_CONFIG
+swagger_config["swagger_ui"] = False
+swagger_config["specs"][0]["route"] = "/v1/spec.json"
 swagger = Swagger(app, config=swagger_config)
 api = Blueprint("api_v1", __name__)
 
