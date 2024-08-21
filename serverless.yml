@@ -37,7 +37,7 @@ functions:
   toot:
     handler: src/toot.toot_random_quote
     events:
-      - schedule: cron(0 12 ? * WED *)
+      - schedule: cron(0 11 ? * WED *)
 
 plugins:
   - serverless-wsgi
