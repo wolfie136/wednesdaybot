@@ -8,6 +8,9 @@ custom:
     dockerImage: public.ecr.aws/sam/build-python3.12:1.123.0
   wsgi:
     app: src/api.app
+  domain:
+    dev: devapi.wednesday.zone
+    prod: api.wednesday.zone
 
 provider:
   name: aws
@@ -51,6 +54,167 @@ resources:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: wednesday-api-static-${sls:stage}
+    StaticAssetsS3BucketPolicy:
+      Type: "AWS::S3::BucketPolicy"
+      Properties:
+        Bucket: !Ref StaticAssets
+        PolicyDocument:
+          Version: "2008-10-17"
+          Statement:
+            - Condition:
+                StringEquals:
+                  AWS:SourceArn: !Join
+                    - ""
+                    - - "arn:aws:cloudfront::"
+                      - Ref: AWS::AccountId
+                      - ":distribution/"
+                      - !GetAtt CloudFrontDistribution.Id
+              Resource: !Join
+                - "/"
+                - - !GetAtt StaticAssets.Arn
+                  - "*"
+              Action: "s3:GetObject"
+              Effect: "Allow"
+              Principal:
+                Service: "cloudfront.amazonaws.com"
+              Sid: "AllowCloudFrontServicePrincipal"
+          Id: "PolicyForCloudFrontPrivateContent"
+    StaticAssetsCloudFrontOriginAccessControl:
+      Type: "AWS::CloudFront::OriginAccessControl"
+      Properties:
+        OriginAccessControlConfig:
+          SigningBehavior: "always"
+          SigningProtocol: "sigv4"
+          OriginAccessControlOriginType: "s3"
+          Name: !Ref StaticAssets
+    StaticAssetsCloudfrontCachePolicy:
+      Type: AWS::CloudFront::CachePolicy
+      Properties:
+        CachePolicyConfig:
+          DefaultTTL: 86400
+          MinTTL: 1
+          MaxTTL: 31536000
+          Name: !Ref StaticAssets
+          ParametersInCacheKeyAndForwardedToOrigin:
+            CookiesConfig:
+              CookieBehavior: none
+            EnableAcceptEncodingBrotli: true
+            EnableAcceptEncodingGzip: true
+            HeadersConfig:
+              HeaderBehavior: none
+            QueryStringsConfig:
+              QueryStringBehavior: none
+    ApiCloudfrontCachePolicy:
+      Type: AWS::CloudFront::CachePolicy
+      Properties:
+        CachePolicyConfig:
+          DefaultTTL: 86400
+          MinTTL: 1
+          MaxTTL: 31536000
+          Name: wednesday-api-${sls:stage}
+          ParametersInCacheKeyAndForwardedToOrigin:
+            CookiesConfig:
+              CookieBehavior: none
+            EnableAcceptEncodingBrotli: true
+            EnableAcceptEncodingGzip: true
+            HeadersConfig:
+              HeaderBehavior: none
+            QueryStringsConfig:
+              QueryStringBehavior: none
+    StaticAssetsOriginRequestPolicy:
+      Type: AWS::CloudFront::OriginRequestPolicy
+      Properties:
+        OriginRequestPolicyConfig:
+          Name: !Ref StaticAssets
+          CookiesConfig:
+            CookieBehavior: none
+          HeadersConfig:
+            HeaderBehavior: whitelist
+            Headers:
+              - referer
+              - user-agent
+          QueryStringsConfig:
+            QueryStringBehavior: none
+    ApiOriginRequestPolicy:
+      Type: AWS::CloudFront::OriginRequestPolicy
+      Properties:
+        OriginRequestPolicyConfig:
+          Name: wednesday-api-${sls:stage}
+          CookiesConfig:
+            CookieBehavior: none
+          HeadersConfig:
+            HeaderBehavior: whitelist
+            Headers:
+              - referer
+              - user-agent
+          QueryStringsConfig:
+            QueryStringBehavior: none
+    CloudFrontDistribution:
+      Type: "AWS::CloudFront::Distribution"
+      Properties:
+        DistributionConfig:
+          Comment: "Wednesday API"
+          DefaultRootObject: "index.html"
+          Origins:
+            - DomainName:
+                Fn::Join:
+                  - ""
+                  - - Ref: ApiGatewayRestApi
+                    - ".execute-api."
+                    - Ref: AWS::Region
+                    - ".amazonaws.com"
+              OriginPath: /${sls:stage}
+              Id: wednesday-api-${sls:stage}
+              CustomOriginConfig:
+                OriginSSLProtocols:
+                  - "TLSv1.2"
+                OriginProtocolPolicy: "https-only"
+            - OriginAccessControlId:
+                Ref: StaticAssetsCloudFrontOriginAccessControl
+              DomainName: !GetAtt StaticAssets.DomainName
+              S3OriginConfig:
+                OriginAccessIdentity: ""
+              OriginPath: ""
+              Id: !Ref StaticAssets
+          ViewerCertificate:
+            MinimumProtocolVersion: "TLSv1.2_2021"
+            SslSupportMethod: "sni-only"
+            AcmCertificateArn: "arn:aws:acm:us-east-1:033667237508:certificate/a9f1b80e-fb4d-44bb-ad69-0df4aba24807"
+          PriceClass: "PriceClass_100"
+          DefaultCacheBehavior:
+            Compress: true
+            TargetOriginId: !Ref StaticAssets
+            ViewerProtocolPolicy: "redirect-to-https"
+            AllowedMethods:
+              - "HEAD"
+              - "GET"
+            CachedMethods:
+              - "HEAD"
+              - "GET"
+            OriginRequestPolicyId:
+              Ref: StaticAssetsOriginRequestPolicy
+            CachePolicyId:
+              Ref: StaticAssetsCloudfrontCachePolicy
+          Enabled: true
+          Aliases:
+            - ${self:custom.domain.${opt:stage, sls:stage}}
+          IPV6Enabled: true
+          HttpVersion: "http2and3"
+          CacheBehaviors:
+            - Compress: true
+              TargetOriginId: wednesday-api-${sls:stage}
+              ViewerProtocolPolicy: "redirect-to-https"
+              AllowedMethods:
+                - "HEAD"
+                - "GET"
+              PathPattern: "/v1/*"
+              CachedMethods:
+                - "HEAD"
+                - "GET"
+              OriginRequestPolicyId:
+                Ref: ApiOriginRequestPolicy
+              CachePolicyId:
+                Ref: ApiCloudfrontCachePolicy
   Outputs:
     StaticAssetsBucketName:
       Value: !Ref StaticAssets
