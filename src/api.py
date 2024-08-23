@@ -20,12 +20,7 @@ swagger = Swagger(app, config=swagger_config)
 api = Blueprint("api_v1", __name__)
 
 
-if logging.getLogger().hasHandlers():
-    # The Lambda environment pre-configures a handler logging to stderr. If a handler is already configured,
-    # `.basicConfig` does not execute. Thus we set the level directly.
-    logging.getLogger().setLevel(logging.INFO)
-else:
-    logging.basicConfig(level=logging.INFO)
+logging.basicConfig(format="%(asctime)s %(message)s", level=logging.INFO, force=True)
 
 
 @api.route("/quote")
@@ -99,8 +94,12 @@ def quote_index(index):
         schema:
           $ref: '#/definitions/Quote'
     """
-    quote = utils.load_quotes()[index]
-    return jsonify(quote)
+    try:
+        quote = utils.load_quotes()[index]
+        return jsonify(quote)
+    except IndexError:
+        logging.debug("No quote found")
+        return make_response(jsonify(error="Quote not found!"), 404)
 
 
 @app.errorhandler(404)
