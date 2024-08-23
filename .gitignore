@@ -3,3 +3,5 @@ node_modules/
 .serverless/
 .env
 __pycache__/
+.coverage
+coverage.xml

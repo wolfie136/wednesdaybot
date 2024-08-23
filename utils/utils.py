@@ -3,10 +3,10 @@ import os
 from datetime import datetime
 
 
-def load_quotes():
+def load_quotes(path="./wednesday.scv"):
     # Read in the CSV to a list of dicts
     wednesday_list = []
-    with open("wednesday.csv", newline="") as csvfile:
+    with open(path, newline="") as csvfile:
         reader = csv.DictReader(
             csvfile, delimiter=";", fieldnames=["quote", "attribution"]
         )

@@ -1,15 +1,15 @@
 format:
-	black src/ utils/
-	isort --profile black src/ utils/
+	black src/ utils/ tests/
+	isort --profile black src/ utils/ tests/
 
 lint:
-	black --check src/ utils/
-	isort --profile black --check src/ utils/
-	flake8 src/ utils/
-	mypy src/ utils/
+	black --check src/ utils/ tests/
+	isort --profile black --check src/ utils/ tests/
+	flake8 src/ utils/ tests/
+	mypy src/ utils/ tests/
 
 test:
-	pytest -v --cov --cov-report xml:coverage.xml --cov-report term src/ utils/
+	pytest -v --cov --cov-report xml:coverage.xml --cov-report term tests/
 
 deploy:
 	sls deploy
