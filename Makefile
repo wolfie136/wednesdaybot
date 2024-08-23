@@ -6,7 +6,7 @@ lint:
 	black --check src/ utils/ tests/
 	isort --profile black --check src/ utils/ tests/
 	flake8 src/ utils/ tests/
-	mypy src/ utils/ tests/
+	mypy src/ utils/
 
 test:
 	pytest -v --cov --cov-report xml:coverage.xml --cov-report term tests/
