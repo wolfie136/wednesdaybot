@@ -2,8 +2,9 @@ import os
 import uuid
 
 import pytest
+from freezegun import freeze_time
 
-from utils.utils import load_quotes
+from utils.utils import is_it_wednesday, load_quotes
 
 
 @pytest.fixture
@@ -16,7 +17,7 @@ def setup_quote_file():
     os.remove(temp_path)
 
 
-def test_load_quoes(setup_quote_file):
+def test_load_quotes(setup_quote_file):
     """
     Check that quotes get loaded
     """
@@ -27,3 +28,24 @@ def test_load_quoes(setup_quote_file):
         {"quote": "quote number two", "attribution": "author two"},
     ]
     assert quotes == expected_list
+
+
+@freeze_time("2024-08-21")
+def test_is_it_wednesday_positive():
+    assert is_it_wednesday() is True
+
+
+@freeze_time("2024-08-23")
+def test_is_it_wednesday_negative():
+    assert is_it_wednesday() is False
+
+
+@freeze_time("2024-08-23")
+def test_is_it_wednesday_fake():
+    assert is_it_wednesday(fake_wednesday=True) is True
+
+
+@freeze_time("2024-08-23")
+def test_is_it_wednesday_fake_env():
+    os.environ["FAKE_WEDNESDAY"] = "something"
+    assert is_it_wednesday() is True
