@@ -4,7 +4,7 @@ import random
 from flasgger import Swagger
 from flask import Blueprint, Flask, jsonify, make_response
 
-from utils import utils
+from utils import dynamodb
 
 app = Flask(__name__)
 app.config["SWAGGER"] = {
@@ -45,7 +45,7 @@ def quote():
         schema:
           $ref: '#/definitions/QuoteList'
     """
-    quotes = utils.load_quotes()
+    quotes = dynamodb.get_quotes()
     return jsonify(quotes)
 
 
@@ -67,18 +67,18 @@ def quote_random():
         schema:
           $ref: '#/definitions/Quote'
     """
-    random_quote = random.choice(utils.load_quotes())
+    random_quote = random.choice(dynamodb.get_quotes())
     return jsonify(random_quote)
 
 
-@api.route("/quote/<int:index>")
-def quote_index(index):
+@api.route("/quote/<string:quote_id>")
+def quote_index(quote_id):
     """Returns a specific quote.
     ---
     parameters:
-      - name: index
+      - name: quote_id
         in: path
-        type: integer
+        type: string
         required: true
     definitions:
       Quote:
@@ -95,7 +95,7 @@ def quote_index(index):
           $ref: '#/definitions/Quote'
     """
     try:
-        quote = utils.load_quotes()[index]
+        quote = dynamodb.get_quote(quote_id=quote_id)
         return jsonify(quote)
     except IndexError:
         logging.debug("No quote found")
