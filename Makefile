@@ -13,3 +13,6 @@ test:
 
 deploy:
 	sls deploy
+
+run:
+	PYTHONPATH=./ flask --debug --app src/api.py run

@@ -2,7 +2,7 @@ import logging
 import random
 
 from flasgger import Swagger
-from flask import Blueprint, Flask, jsonify, make_response
+from flask import Blueprint, Flask, jsonify, make_response, request
 
 from utils import dynamodb
 
@@ -23,8 +23,8 @@ api = Blueprint("api_v1", __name__)
 logging.basicConfig(format="%(asctime)s %(message)s", level=logging.INFO, force=True)
 
 
-@api.route("/quote")
-def quote():
+@api.route("/quotes")
+def quotes():
     """Returns the full list of available quotes.
     ---
     definitions:
@@ -45,11 +45,29 @@ def quote():
         schema:
           $ref: '#/definitions/QuoteList'
     """
-    quotes = dynamodb.get_quotes()
-    return jsonify(quotes)
+    start_id = request.args.get("start_id")
+    quotes, last_evaluated_key = dynamodb.get_quotes(start_id=start_id)
+    api_root = "https://devapi.wednesday.zone/v1"
+    response = {
+        "links": {
+            "self": (
+                f"{api_root}/quotes?start_id={start_id}"
+                if start_id
+                else f"{api_root}/quotes"
+            )
+        },
+        "data": quotes,
+    }
+
+    if last_evaluated_key:
+        response["links"][
+            "next"
+        ] = f"{api_root}/quotes?start_id={last_evaluated_key["id"]}"
+
+    return jsonify(response)
 
 
-@api.route("/quote/random")
+@api.route("/quotes/random")
 def quote_random():
     """Returns a random quote.
     ---
@@ -71,7 +89,7 @@ def quote_random():
     return jsonify(random_quote)
 
 
-@api.route("/quote/<string:quote_id>")
+@api.route("/quotes/<string:quote_id>")
 def quote_index(quote_id):
     """Returns a specific quote.
     ---

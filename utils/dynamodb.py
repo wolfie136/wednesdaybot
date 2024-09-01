@@ -3,7 +3,6 @@ import uuid
 from datetime import datetime
 
 import boto3
-from boto3.dynamodb.conditions import Key
 
 from utils.utils import load_quotes_from_csv
 
@@ -18,12 +17,10 @@ def store_quote(quote_text: str, quote_attribution: str):
     now = datetime.utcnow()
     quote_id = str(uuid.uuid4())
     response = table.update_item(
-        Key={
-            "quote_id": quote_id,
-            "quote_text": quote_text,
-        },
-        UpdateExpression="SET quote_added = :quote_added, quote_attribution = :quote_attribution",
+        Key={"id": quote_id},
+        UpdateExpression="SET quote_text = :quote_text, quote_added = :quote_added, quote_attribution = :quote_attribution",
         ExpressionAttributeValues={
+            ":quote_text": quote_text,
             ":quote_added": now.isoformat(),
             ":quote_attribution": quote_attribution,
         },
@@ -35,7 +32,7 @@ def store_quote(quote_text: str, quote_attribution: str):
 def audit_event(quote_id: str, event_type: str, event_timestamp):
     event_table = dynamodb.Table("wednesday-api-dev-quote-event")
     return event_table.update_item(
-        Key={"event_id": f"{quote_id}-added-{uuid.uuid4()}", "quote_id": quote_id},
+        Key={"id": f"{quote_id}-added-{uuid.uuid4()}", "quote_id": quote_id},
         UpdateExpression="SET event_type = :event_type, event_timestamp = :event_timestamp",
         ExpressionAttributeValues={
             ":event_type": event_type,
@@ -44,17 +41,23 @@ def audit_event(quote_id: str, event_type: str, event_timestamp):
     )
 
 
-def get_quotes():
+def get_quotes(start_id: str):
     table = dynamodb.Table("wednesday-api-dev-quote")
-    response = table.scan()
+    if start_id:
+        response = table.scan(Limit=50, ExclusiveStartKey={"id": start_id})
+    else:
+        response = table.scan(Limit=50)
     quote_list = response["Items"]
-    return quote_list
+    last_evaluated_key = (
+        response["LastEvaluatedKey"] if "LastEvaluatedKey" in response else None
+    )
+    return quote_list, last_evaluated_key
 
 
 def get_quote(quote_id: str):
     table = dynamodb.Table("wednesday-api-dev-quote")
-    response = table.query(KeyConditionExpression=Key("quote_id").eq(quote_id))
-    return response["Items"][0]
+    response = table.get_item(Key={"id": quote_id})
+    return response["Items"]
 
 
 def import_quotes(path="./wednesday.csv"):

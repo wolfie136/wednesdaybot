@@ -235,27 +235,23 @@ resources:
         BillingMode: "PAY_PER_REQUEST"
         TableName: wednesday-api-${sls:stage}-quote
         AttributeDefinitions:
-          - AttributeName: quote_id
-            AttributeType: S
-          - AttributeName: quote_text
+          - AttributeName: id
             AttributeType: S
         KeySchema:
-          - AttributeName: quote_id
+          - AttributeName: id
             KeyType: HASH
-          - AttributeName: quote_text
-            KeyType: RANGE
     QuoteEventTable:
       Type: AWS::DynamoDB::Table
       Properties:
         BillingMode: "PAY_PER_REQUEST"
         TableName: wednesday-api-${sls:stage}-quote-event
         AttributeDefinitions:
-          - AttributeName: event_id
+          - AttributeName: id
             AttributeType: S
           - AttributeName: quote_id
             AttributeType: S
         KeySchema:
-          - AttributeName: event_id
+          - AttributeName: id
             KeyType: HASH
           - AttributeName: quote_id
             KeyType: RANGE
