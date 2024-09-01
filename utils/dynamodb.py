@@ -47,17 +47,33 @@ def get_quotes(start_id: str):
         response = table.scan(Limit=50, ExclusiveStartKey={"id": start_id})
     else:
         response = table.scan(Limit=50)
-    quote_list = response["Items"]
+    response_items = response["Items"]
     last_evaluated_key = (
         response["LastEvaluatedKey"] if "LastEvaluatedKey" in response else None
     )
+    quote_list = []
+    for quote in response_items:
+        quote_list.append(
+            {
+                "id": quote["id"],
+                "added": quote["quote_added"],
+                "text": quote["quote_text"],
+                "attribution": quote["quote_attribution"],
+            }
+        )
     return quote_list, last_evaluated_key
 
 
 def get_quote(quote_id: str):
     table = dynamodb.Table("wednesday-api-dev-quote")
     response = table.get_item(Key={"id": quote_id})
-    return response["Items"]
+    quote = response["Item"]
+    return {
+        "id": quote["id"],
+        "added": quote["quote_added"],
+        "text": quote["quote_text"],
+        "attribution": quote["quote_attribution"],
+    }
 
 
 def import_quotes(path="./wednesday.csv"):

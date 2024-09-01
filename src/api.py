@@ -85,8 +85,10 @@ def quote_random():
         schema:
           $ref: '#/definitions/Quote'
     """
-    random_quote = random.choice(dynamodb.get_quotes())
-    return jsonify(random_quote)
+    quote = random.choice(dynamodb.get_quotes(start_id=None)[0])
+    print(quote)
+    response = {"data": quote}
+    return jsonify(response)
 
 
 @api.route("/quotes/<string:quote_id>")
@@ -114,7 +116,8 @@ def quote_index(quote_id):
     """
     try:
         quote = dynamodb.get_quote(quote_id=quote_id)
-        return jsonify(quote)
+        response = {"data": quote}
+        return jsonify(response)
     except IndexError:
         logging.debug("No quote found")
         return make_response(jsonify(error="Quote not found!"), 404)
