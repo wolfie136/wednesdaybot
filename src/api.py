@@ -47,7 +47,7 @@ def quotes():
     """
     start_id = request.args.get("start_id")
     quotes, last_evaluated_key = dynamodb.get_quotes(start_id=start_id)
-    api_root = "https://devapi.wednesday.zone/v1"
+    api_root = f"{request.url_root}v1"
     response = {
         "links": {
             "self": (

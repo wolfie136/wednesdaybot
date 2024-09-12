@@ -1,4 +1,5 @@
 import logging
+import os
 import uuid
 from datetime import datetime
 
@@ -10,11 +11,12 @@ dynamodb = boto3.resource(
     "dynamodb",
     region_name="eu-west-2",
 )
+dynamodb_table_prefix = os.getenv("DYNAMODB_TABLE_PREFIX", "wednesday-api-dev")
 
 
 def store_quote(quote_text: str, quote_attribution: str):
-    table = dynamodb.Table("wednesday-api-dev-quote")
-    now = datetime.utcnow()
+    table = dynamodb.Table(f"{dynamodb_table_prefix}-quote")
+    now = datetime.now(datetime.timezone.utc)
     quote_id = str(uuid.uuid4())
     response = table.update_item(
         Key={"id": quote_id},
@@ -30,7 +32,7 @@ def store_quote(quote_text: str, quote_attribution: str):
 
 
 def audit_event(quote_id: str, event_type: str, event_timestamp):
-    event_table = dynamodb.Table("wednesday-api-dev-quote-event")
+    event_table = dynamodb.Table(f"{dynamodb_table_prefix}-quote-event")
     return event_table.update_item(
         Key={"id": f"{quote_id}-added-{uuid.uuid4()}", "quote_id": quote_id},
         UpdateExpression="SET event_type = :event_type, event_timestamp = :event_timestamp",
@@ -42,7 +44,7 @@ def audit_event(quote_id: str, event_type: str, event_timestamp):
 
 
 def get_quotes(start_id: str):
-    table = dynamodb.Table("wednesday-api-dev-quote")
+    table = dynamodb.Table(f"{dynamodb_table_prefix}-quote")
     if start_id:
         response = table.scan(Limit=50, ExclusiveStartKey={"id": start_id})
     else:
@@ -65,7 +67,7 @@ def get_quotes(start_id: str):
 
 
 def get_quote(quote_id: str):
-    table = dynamodb.Table("wednesday-api-dev-quote")
+    table = dynamodb.Table(f"{dynamodb_table_prefix}-quote")
     response = table.get_item(Key={"id": quote_id})
     quote = response["Item"]
     return {
