@@ -32,7 +32,18 @@ def toot_quote(quote_dict):
 
 def toot_random_quote(event=None, context=None, fake_wednesday=False):
     if utils.is_it_wednesday(fake_wednesday=fake_wednesday):
-        random_quote = random.choice(dynamodb.get_quotes(start_id=None, limit=False)[0])
-        toot_quote(random_quote)
+        quote_list = dynamodb.get_quotes(start_id=None, limit=False)[0]
+
+        posted = False
+        while not posted and quote_list:
+            random_quote = random.choice(quote_list)
+            print(random_quote)
+            if not dynamodb.check_quote_posted(random_quote["id"]):
+                toot_quote(random_quote)
+                posted = True
+            else:
+                quote_list.remove(random_quote)
+        if not posted:
+            logging.error("Could not find quote we haven't posted")
     else:
         logging.info("Not tooting because it is not Wednesday")

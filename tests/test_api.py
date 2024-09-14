@@ -49,6 +49,5 @@ def test_request_quote_id(client):
     # When getting an invalid id we get an error
     response = client.get("/v1/quotes/randomshiz")
     response_json = json.loads(response.data)
-    print(response_json)
     assert len(response_json.keys()) == 1
     assert response_json["error"] == "Quote not found!"

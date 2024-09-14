@@ -5,6 +5,7 @@ import uuid
 from typing import Optional
 
 import boto3
+from boto3.dynamodb.conditions import Attr
 
 from utils.utils import load_quotes_from_csv
 
@@ -93,3 +94,13 @@ def import_quotes(path="./wednesday.csv"):
     for quote in quote_list:
         store_quote(quote_text=quote["quote"], quote_attribution=quote["attribution"])
         logging.info(f"Storing quote {quote}")
+
+
+def check_quote_posted(quote_id: str):
+    event_table = dynamodb.Table(f"{dynamodb_table_prefix}-quote-event")
+    filter_expression = Attr("quote_id").eq(quote_id) & Attr("event_type").eq("posted")
+    response = event_table.scan(FilterExpression=filter_expression)
+    response_items = response["Items"]
+    if response_items:
+        return True
+    return False
