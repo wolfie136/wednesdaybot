@@ -2,6 +2,7 @@ import datetime
 import logging
 import os
 import uuid
+from typing import Optional
 
 import boto3
 
@@ -27,14 +28,19 @@ def store_quote(quote_text: str, quote_attribution: str):
             ":quote_attribution": quote_attribution,
         },
     )
-    audit_event(quote_id=quote_id, event_type="added", event_timestamp=now.isoformat())
+    audit_event(quote_id=quote_id, event_type="added")
     return response
 
 
-def audit_event(quote_id: str, event_type: str, event_timestamp):
+def audit_event(quote_id: str, event_type: str, event_timestamp: Optional[str] = None):
     event_table = dynamodb.Table(f"{dynamodb_table_prefix}-quote-event")
+
+    if not event_timestamp:
+        now = datetime.datetime.now(datetime.timezone.utc)
+        event_timestamp = now.isoformat()
+
     return event_table.update_item(
-        Key={"id": f"{quote_id}-added-{uuid.uuid4()}", "quote_id": quote_id},
+        Key={"id": f"{quote_id}-{event_type}-{uuid.uuid4()}", "quote_id": quote_id},
         UpdateExpression="SET event_type = :event_type, event_timestamp = :event_timestamp",
         ExpressionAttributeValues={
             ":event_type": event_type,

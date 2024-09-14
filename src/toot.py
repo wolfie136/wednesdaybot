@@ -27,6 +27,7 @@ def toot_quote(quote_dict):
 
     logging.info(f"Tooting quote: {toot_text}")
     mastodon.status_post(toot_text)
+    dynamodb.audit_event(quote_dict["id"], "posted")
 
 
 def toot_random_quote(event=None, context=None, fake_wednesday=False):

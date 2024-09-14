@@ -7,7 +7,7 @@ from src.toot import toot_quote, toot_random_quote
 def test_toot_quote(MockMastodon):
     mastodon = MockMastodon()
     mastodon.status_post = MagicMock(return_value=True)
-    toot_quote({"text": "my quote", "attribution": "author name"})
+    toot_quote({"id": "testid", "text": "my quote", "attribution": "author name"})
     mastodon.status_post.assert_called_once_with("my quote - author name")
 
 
