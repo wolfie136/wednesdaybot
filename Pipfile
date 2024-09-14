@@ -7,6 +7,7 @@ name = "pypi"
 flask = "*"
 "mastodon.py" = "*"
 flasgger = "*"
+boto3 = "*"
 
 [dev-packages]
 flake8 = "*"
@@ -16,6 +17,7 @@ mypy = "*"
 pytest = "*"
 pytest-cov = "*"
 freezegun = "*"
+boto3-stubs = "*"
 
 [requires]
 python_version = "3.12"

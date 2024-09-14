@@ -4,7 +4,7 @@ import uuid
 import pytest
 from freezegun import freeze_time
 
-from utils.utils import is_it_wednesday, load_quotes
+from utils.utils import is_it_wednesday, load_quotes_from_csv
 
 
 @pytest.fixture
@@ -17,12 +17,12 @@ def setup_quote_file():
     os.remove(temp_path)
 
 
-def test_load_quotes(setup_quote_file):
+def test_load_quotes_from_csv(setup_quote_file):
     """
     Check that quotes get loaded
     """
 
-    quotes = load_quotes(setup_quote_file)
+    quotes = load_quotes_from_csv(setup_quote_file)
     expected_list = [
         {"quote": "quote number one", "attribution": "author"},
         {"quote": "quote number two", "attribution": "author two"},

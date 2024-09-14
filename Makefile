@@ -9,7 +9,11 @@ lint:
 	mypy src/ utils/
 
 test:
-	pytest -v --cov --cov-report xml:coverage.xml --cov-report term tests/
+	pytest -v
+	# --cov --cov-report xml:coverage.xml --cov-report term tests/
 
 deploy:
 	sls deploy
+
+run:
+	PYTHONPATH=./ flask --debug --app src/api.py run

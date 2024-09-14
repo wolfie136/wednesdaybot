@@ -2,9 +2,9 @@ import logging
 import random
 
 from flasgger import Swagger
-from flask import Blueprint, Flask, jsonify, make_response
+from flask import Blueprint, Flask, jsonify, make_response, request
 
-from utils import utils
+from utils import dynamodb
 
 app = Flask(__name__)
 app.config["SWAGGER"] = {
@@ -23,8 +23,8 @@ api = Blueprint("api_v1", __name__)
 logging.basicConfig(format="%(asctime)s %(message)s", level=logging.INFO, force=True)
 
 
-@api.route("/quote")
-def quote():
+@api.route("/quotes")
+def quotes():
     """Returns the full list of available quotes.
     ---
     definitions:
@@ -45,11 +45,29 @@ def quote():
         schema:
           $ref: '#/definitions/QuoteList'
     """
-    quotes = utils.load_quotes()
-    return jsonify(quotes)
+    start_id = request.args.get("start_id")
+    quotes, last_evaluated_key = dynamodb.get_quotes(start_id=start_id)
+    api_root = f"{request.url_root}v1"
+    response = {
+        "links": {
+            "self": (
+                f"{api_root}/quotes?start_id={start_id}"
+                if start_id
+                else f"{api_root}/quotes"
+            )
+        },
+        "data": quotes,
+    }
+
+    if last_evaluated_key:
+        response["links"][
+            "next"
+        ] = f"{api_root}/quotes?start_id={last_evaluated_key["id"]}"
+
+    return jsonify(response)
 
 
-@api.route("/quote/random")
+@api.route("/quotes/random")
 def quote_random():
     """Returns a random quote.
     ---
@@ -67,18 +85,20 @@ def quote_random():
         schema:
           $ref: '#/definitions/Quote'
     """
-    random_quote = random.choice(utils.load_quotes())
-    return jsonify(random_quote)
+    quote = random.choice(dynamodb.get_quotes(start_id=None)[0])
+    print(quote)
+    response = {"data": quote}
+    return jsonify(response)
 
 
-@api.route("/quote/<int:index>")
-def quote_index(index):
+@api.route("/quotes/<string:quote_id>")
+def quote_index(quote_id):
     """Returns a specific quote.
     ---
     parameters:
-      - name: index
+      - name: quote_id
         in: path
-        type: integer
+        type: string
         required: true
     definitions:
       Quote:
@@ -95,9 +115,10 @@ def quote_index(index):
           $ref: '#/definitions/Quote'
     """
     try:
-        quote = utils.load_quotes()[index]
-        return jsonify(quote)
-    except IndexError:
+        quote = dynamodb.get_quote(quote_id=quote_id)
+        response = {"data": quote}
+        return jsonify(response)
+    except KeyError:
         logging.debug("No quote found")
         return make_response(jsonify(error="Quote not found!"), 404)
 
