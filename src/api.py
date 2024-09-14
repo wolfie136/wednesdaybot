@@ -118,7 +118,7 @@ def quote_index(quote_id):
         quote = dynamodb.get_quote(quote_id=quote_id)
         response = {"data": quote}
         return jsonify(response)
-    except IndexError:
+    except KeyError:
         logging.debug("No quote found")
         return make_response(jsonify(error="Quote not found!"), 404)
 

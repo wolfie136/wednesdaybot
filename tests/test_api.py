@@ -11,39 +11,44 @@ def client():
 
 
 def test_request_quote(client):
-    response = client.get("/v1/quote")
+    response = client.get("/v1/quotes")
     response_object = json.loads(response.data)
     assert len(response_object) > 0
-    for quote in response_object:
-        assert len(quote.keys()) == 2
-        assert "quote" in quote
+    for quote in response_object["data"]:
+        assert len(quote.keys()) == 4
+        assert "text" in quote
         assert "attribution" in quote
+        assert "id" in quote
+        assert "added" in quote
+    assert "next" in response_object["links"].keys()
+    assert "self" in response_object["links"].keys()
 
 
 def test_request_quote_random(client):
-    response = client.get("/v1/quote/random")
-    quote = json.loads(response.data)
-    assert len(quote.keys()) == 2
-    assert "quote" in quote
+    response = client.get("/v1/quotes/random")
+    quote = json.loads(response.data)["data"]
+    assert len(quote.keys()) == 4
+    assert "text" in quote
     assert "attribution" in quote
+    assert "id" in quote
+    assert "added" in quote
 
 
-def test_request_quote_index(client):
-    with open("wednesday.csv") as csvfile:
-        quote_count = sum(1 for _ in csvfile)
-
-    # Check we can get all the available quotes in the file
-    index_counter = 0
-    while index_counter < quote_count:
-        response = client.get(f"/v1/quote/{index_counter}")
-        quote = json.loads(response.data)
-        assert len(quote.keys()) == 2
-        assert "quote" in quote
+def test_request_quote_id(client):
+    index_response = client.get("/v1/quotes")
+    index_response_object = json.loads(index_response.data)
+    for index_quote in index_response_object["data"]:
+        response = client.get(f"/v1/quotes/{index_quote["id"]}")
+        quote = json.loads(response.data)["data"]
+        assert len(quote.keys()) == 4
+        assert "text" in quote
         assert "attribution" in quote
-        index_counter += 1
+        assert "id" in quote
+        assert "added" in quote
 
-    # When getting a higher index we get an error
-    response = client.get(f"/v1/quote/{index_counter}")
-    quote = json.loads(response.data)
-    assert len(quote.keys()) == 1
-    assert quote["error"] == "Quote not found!"
+    # When getting an invalid id we get an error
+    response = client.get(f"/v1/quotes/randomshiz")
+    response_json = json.loads(response.data)
+    print(response_json)
+    assert len(response_json.keys()) == 1
+    assert response_json["error"] == "Quote not found!"
