@@ -1,7 +1,7 @@
+import datetime
 import logging
 import os
 import uuid
-from datetime import datetime
 
 import boto3
 
@@ -16,7 +16,7 @@ dynamodb_table_prefix = os.getenv("DYNAMODB_TABLE_PREFIX", "wednesday-api-dev")
 
 def store_quote(quote_text: str, quote_attribution: str):
     table = dynamodb.Table(f"{dynamodb_table_prefix}-quote")
-    now = datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.timezone.utc)
     quote_id = str(uuid.uuid4())
     response = table.update_item(
         Key={"id": quote_id},
@@ -43,12 +43,16 @@ def audit_event(quote_id: str, event_type: str, event_timestamp):
     )
 
 
-def get_quotes(start_id: str):
+def get_quotes(start_id: str, limit: bool = True):
     table = dynamodb.Table(f"{dynamodb_table_prefix}-quote")
     if start_id:
         response = table.scan(Limit=50, ExclusiveStartKey={"id": start_id})
     else:
-        response = table.scan(Limit=50)
+        if limit:
+            response = table.scan(Limit=50)
+        else:
+            response = table.scan()
+
     response_items = response["Items"]
     last_evaluated_key = (
         response["LastEvaluatedKey"] if "LastEvaluatedKey" in response else None

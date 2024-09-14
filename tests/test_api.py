@@ -47,7 +47,7 @@ def test_request_quote_id(client):
         assert "added" in quote
 
     # When getting an invalid id we get an error
-    response = client.get(f"/v1/quotes/randomshiz")
+    response = client.get("/v1/quotes/randomshiz")
     response_json = json.loads(response.data)
     print(response_json)
     assert len(response_json.keys()) == 1

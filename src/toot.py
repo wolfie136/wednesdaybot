@@ -4,7 +4,7 @@ import random
 
 from mastodon import Mastodon
 
-from utils import utils
+from utils import dynamodb, utils
 
 if logging.getLogger().hasHandlers():
     # The Lambda environment pre-configures a handler logging to stderr. If a handler is already configured,
@@ -21,7 +21,7 @@ def toot_quote(quote_dict):
     )
 
     # Toot
-    toot_text = quote_dict["quote"]
+    toot_text = quote_dict["text"]
     if "attribution" in quote_dict and quote_dict["attribution"]:
         toot_text = toot_text + " - " + quote_dict["attribution"]
 
@@ -29,9 +29,9 @@ def toot_quote(quote_dict):
     mastodon.status_post(toot_text)
 
 
-def toot_random_quote(event=None, context=None):
-    if utils.is_it_wednesday():
-        random_quote = random.choice(utils.load_quotes())
+def toot_random_quote(event=None, context=None, fake_wednesday=False):
+    if utils.is_it_wednesday(fake_wednesday=fake_wednesday):
+        random_quote = random.choice(dynamodb.get_quotes(start_id=None, limit=False)[0])
         toot_quote(random_quote)
     else:
         logging.info("Not tooting because it is not Wednesday")
