@@ -36,7 +36,11 @@ provider:
             - 'dynamodb:BatchWriteItem'
           Resource:
             - !Sub arn:aws:dynamodb:eu-west-2:${AWS::AccountId}:table/wednesday-api-${sls:stage}-*
-
+        - Effect: Allow
+          Action:
+            - 'ssm:GetParameter'
+          Resource:
+            - !Sub arn:aws:ssm:eu-west-2:${AWS::AccountId}:parameter/${sls:stage}/wednesday-api/*
 package:
   include:
     - "!./**"
@@ -58,12 +62,14 @@ functions:
           path: /{proxy+}
           method: ANY
     environment:
+      STAGE: ${sls:stage}
       DYNAMODB_TABLE_PREFIX: wednesday-api-${sls:stage}
   toot:
     handler: src/toot.toot_random_quote
     events:
       - schedule: cron(0 11 ? * WED *)
     environment:
+      STAGE: ${sls:stage}
       DYNAMODB_TABLE_PREFIX: wednesday-api-${sls:stage}
 
 resources:

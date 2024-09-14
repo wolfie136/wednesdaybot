@@ -2,6 +2,7 @@ import logging
 import os
 import random
 
+import boto3
 from mastodon import Mastodon
 
 from utils import dynamodb, utils
@@ -15,9 +16,19 @@ else:
 
 
 def toot_quote(quote_dict):
+    stage = os.getenv("STAGE", "dev")
+    client = boto3.client("ssm")
+    access_token_parameter = client.get_parameter(
+        Name=f"/{stage}/wednesday-api/MASTODON_ACCESS_TOKEN"
+    )
+    access_token_value = access_token_parameter["Parameter"]["Value"]
+    base_url_parameter = client.get_parameter(
+        Name=f"/{stage}/wednesday-api/MASTODON_BASE_URL"
+    )
+    base_url_value = base_url_parameter["Parameter"]["Value"]
     mastodon = Mastodon(
-        access_token=os.environ.get("MASTODON_ACCESS_TOKEN", ""),
-        api_base_url=os.environ.get("MASTODON_BASE_URL", ""),
+        access_token=access_token_value,
+        api_base_url=base_url_value,
     )
 
     # Toot
